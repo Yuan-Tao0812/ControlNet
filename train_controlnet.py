@@ -35,8 +35,7 @@ def load_dataset(image_dir, mask_dir, max_samples=2000):
 ds = load_dataset(image_dir, mask_dir)
 
 # 加载模型
-from diffusers import ControlNetModel, UNet2DConditionModel, AutoencoderKL
-
+print("ControlNet准备中")
 # ControlNet 语义分割模型路径
 controlnet = ControlNetModel.from_pretrained(
     "lllyasviel/control_v11p_sd15_seg",
@@ -44,18 +43,19 @@ controlnet = ControlNetModel.from_pretrained(
 )
 
 # Stable Diffusion v1.5 基础模型路径（从官方模型库加载）
+print("vae准备中")
 vae = AutoencoderKL.from_pretrained(
     "stable-diffusion-v1-5/stable-diffusion-v1-5",
     subfolder="vae",
     torch_dtype=torch.float16
 )
-
+print("unet准备中")
 unet = UNet2DConditionModel.from_pretrained(
     "stable-diffusion-v1-5/stable-diffusion-v1-5",
     subfolder="unet",
     torch_dtype=torch.float16
 )
-print("✅ 训练即将开始")
+print("训练即将开始")
 
 # 加 LoRA 到 UNet
 def add_lora_to_unet(unet):
@@ -91,7 +91,7 @@ ds = ds.map(preprocess)
 
 # 噪声调度器
 noise_scheduler = DDPMScheduler.from_pretrained("runwayml/stable-diffusion-v1-5", subfolder="scheduler")
-print("🔁 准备进入训练循环")
+print("准备进入训练循环")
 # 训练 loop
 for epoch in range(3):
     for i, batch in enumerate(ds.with_format("torch").shuffle().batch(2)):
