@@ -58,10 +58,10 @@ unet = UNet2DConditionModel.from_pretrained(
 
 
 # 加 LoRA 到 UNet
-def add_lora_to_unet(unet, rank=4):
+def add_lora_to_unet(unet):
     for _, module in unet.named_modules():
         if hasattr(module, "set_processor") and hasattr(module, "to_q"):
-            module.set_processor(LoRAAttnProcessor(hidden_size=module.to_q.in_features, rank=rank))
+            module.set_processor(LoRAAttnProcessor())
     return unet
 
 unet = add_lora_to_unet(unet)
