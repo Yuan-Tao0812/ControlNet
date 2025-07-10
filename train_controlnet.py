@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from datasets import Dataset
 from PIL import Image
 from diffusers import ControlNetModel, UNet2DConditionModel, AutoencoderKL, DDPMScheduler
-from peft import get_peft_model, LoraConfig, TaskType
+from diffusers.models.attention_processor import LoRAAttnProcessor
 from accelerate import Accelerator
 from huggingface_hub import login
 from torchvision import transforms
@@ -58,15 +58,13 @@ unet = UNet2DConditionModel.from_pretrained(
 
 
 # 加 LoRA 到 UNet
-lora_config = LoraConfig(
-    r=4,
-    lora_alpha=16,
-    target_modules=["to_k", "to_q"],
-    lora_dropout=0.1,
-    bias="none",
-    task_type=TaskType.UNET
-)
-unet = get_peft_model(unet, lora_config)
+def add_lora_to_unet(unet, rank=4):
+    for _, module in unet.named_modules():
+        if hasattr(module, "set_processor") and hasattr(module, "to_q"):
+            module.set_processor(LoRAAttnProcessor(hidden_size=module.to_q.in_features, rank=rank))
+    return unet
+
+unet = add_lora_to_unet(unet)
 
 # 优化器
 optimizer = torch.optim.Adam(unet.parameters(), lr=1e-5)
