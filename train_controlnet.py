@@ -101,8 +101,7 @@ def preprocess(example):
 
 print("预处理")
 ds = ds.map(preprocess, remove_columns=["image", "condition"])
-print(type(ds[0]["pixel_values"]), ds[0]["pixel_values"].shape)
-print(type(ds[0]["conditioning_pixel_values"]), ds[0]["conditioning_pixel_values"].shape)
+
 ds = ds.shuffle(seed=42)
 ds.set_format(type="torch", columns=["pixel_values", "conditioning_pixel_values"])
 print(type(ds[0]["pixel_values"]), ds[0]["pixel_values"].shape)
