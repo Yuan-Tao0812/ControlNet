@@ -84,8 +84,8 @@ def preprocess(example):
     image = transform(Image.open(example["image"]).convert("RGB"))
     condition = transform(Image.open(example["condition"]).convert("RGB"))
     return {
-        "pixel_values": image,
-        "conditioning_pixel_values": condition
+        "pixel_values": image.numpy(),
+        "conditioning_pixel_values": condition.numpy()
     }
 
 ds = ds.map(preprocess)
