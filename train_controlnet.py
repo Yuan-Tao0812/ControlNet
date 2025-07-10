@@ -82,21 +82,21 @@ def preprocess(example):
     image = Image.open(example["image"]).convert("RGB")
     condition = Image.open(example["condition"]).convert("RGB")
 
-    # image = transform(image).to(dtype=torch.float16)
-    # condition = transform(condition).to(dtype=torch.float16)
-    image = transform(image)
-    condition = transform(condition)
+    image = np.array(transform(image), dtype=np.float32)
+    condition = np.array(transform(condition), dtype=np.float32)
 
     return {
-        "pixel_values": image.to(dtype=torch.float32),
-        "conditioning_pixel_values": condition.to(dtype=torch.float32)
+        "pixel_values": image,
+        "conditioning_pixel_values": condition
     }
-
 
 ds = ds.map(preprocess, remove_columns=["image", "condition"])
 print("预处理")
 ds = ds.shuffle(seed=42)
 ds.set_format(type="torch", columns=["pixel_values", "conditioning_pixel_values"])
+print(type(ds[0]["pixel_values"]), ds[0]["pixel_values"].shape)
+print(type(ds[0]["conditioning_pixel_values"]), ds[0]["conditioning_pixel_values"].shape)
+
 dataloader = DataLoader(ds, batch_size=2)
 
 # 噪声调度器
@@ -106,9 +106,7 @@ print("准备进入训练循环")
 # 训练 loop
 unet.train()
 controlnet.train()
-batch = next(iter(dataloader))
-print(type(batch["pixel_values"]), batch["pixel_values"].dtype)
-print(type(batch["conditioning_pixel_values"]), batch["conditioning_pixel_values"].dtype)
+
 for epoch in range(3):
     for i, batch in enumerate(dataloader):
         pixel_values = batch["pixel_values"].to(dtype=torch.float32, device=accelerator.device)
