@@ -3,6 +3,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from datasets import Dataset
+import numpy as np
 from PIL import Image
 from diffusers import ControlNetModel, UNet2DConditionModel, AutoencoderKL, DDPMScheduler
 from diffusers.models.attention_processor import LoRAAttnProcessor
@@ -80,19 +81,29 @@ transform = transforms.Compose([
     transforms.ToTensor(),
 ])
 
+
 def preprocess(example):
-    image = transform(Image.open(example["image"]).convert("RGB"))
-    condition = transform(Image.open(example["condition"]).convert("RGB"))
+    image = Image.open(example["image"]).convert("RGB")
+    condition = Image.open(example["condition"]).convert("RGB")
+
+    # 转成 PIL 后手动转成 NumPy 格式，注意 transpose HWC -> CHW
+    image = np.array(image.resize((512, 512))).astype(np.float32) / 255.0
+    condition = np.array(condition.resize((512, 512))).astype(np.float32) / 255.0
+
+    # HWC -> CHW
+    image = np.transpose(image, (2, 0, 1))
+    condition = np.transpose(condition, (2, 0, 1))
+
     return {
-        "pixel_values": image.numpy(),
-        "conditioning_pixel_values": condition.numpy()
+        "pixel_values": image,
+        "conditioning_pixel_values": condition
     }
 
 ds = ds.map(preprocess)
 print("预处理")
 
 ds = ds.shuffle(seed=42)
-ds.set_format("torch")                     # 设置为 PyTorch tensor 格式
+ds.set_format(type="torch", columns=["pixel_values", "conditioning_pixel_values"])
 dataloader = DataLoader(ds, batch_size=2)
 
 # 噪声调度器
