@@ -64,14 +64,14 @@ def add_lora_to_unet(unet):
     return unet
 
 unet = add_lora_to_unet(unet)
-print("加 LoRA 到 UNet")
+
 # 优化器
 optimizer = torch.optim.Adam(unet.parameters(), lr=1e-5)
-print("优化器")
+
 # 加速器
 accelerator = Accelerator()
 unet, optimizer = accelerator.prepare(unet, optimizer)
-print("加速器")
+
 # 预处理函数
 transform = transforms.Compose([
     transforms.Resize((512, 512)),
@@ -79,17 +79,22 @@ transform = transforms.Compose([
 ])
 
 def preprocess(example):
-    image = transform(Image.open(example["image"]).convert("RGB"))
-    condition = transform(Image.open(example["condition"]).convert("RGB"))
+    image = Image.open(example["image"]).convert("RGB")
+    condition = Image.open(example["condition"]).convert("RGB")
+
+    image = transform(image)
+    condition = transform(condition)
+
     return {
-        "pixel_values": image.numpy(),  # 👈 转为 numpy array
-        "conditioning_pixel_values": condition.numpy()
+        "pixel_values": torch.tensor(image, dtype=torch.float16),
+        "conditioning_pixel_values": torch.tensor(condition, dtype=torch.float16)
     }
+
 
 ds = ds.map(preprocess)
 print("预处理")
 ds = ds.shuffle(seed=42)
-ds.set_format(type="torch", columns=["pixel_values", "conditioning_pixel_values"])
+# ds.set_format(type="torch", columns=["pixel_values", "conditioning_pixel_values"])
 dataloader = DataLoader(ds, batch_size=2)
 
 # 噪声调度器
