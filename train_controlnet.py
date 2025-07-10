@@ -82,12 +82,12 @@ def preprocess(example):
     image = Image.open(example["image"]).convert("RGB")
     condition = Image.open(example["condition"]).convert("RGB")
 
-    image = transform(image)
-    condition = transform(condition)
+    image = transform(image).to(dtype=torch.float16)
+    condition = transform(condition).to(dtype=torch.float16)
 
     return {
-        "pixel_values": torch.tensor(image, dtype=torch.float16),
-        "conditioning_pixel_values": torch.tensor(condition, dtype=torch.float16)
+        "pixel_values": image,
+        "conditioning_pixel_values": condition
     }
 
 
