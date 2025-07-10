@@ -83,17 +83,8 @@ transform = transforms.Compose([
 
 
 def preprocess(example):
-    image = Image.open(example["image"]).convert("RGB")
-    condition = Image.open(example["condition"]).convert("RGB")
-
-    # 转成 PIL 后手动转成 NumPy 格式，注意 transpose HWC -> CHW
-    image = np.array(image.resize((512, 512))).astype(np.float32) / 255.0
-    condition = np.array(condition.resize((512, 512))).astype(np.float32) / 255.0
-
-    # HWC -> CHW
-    image = np.transpose(image, (2, 0, 1))
-    condition = np.transpose(condition, (2, 0, 1))
-
+    image = transform(Image.open(example["image"]).convert("RGB"))
+    condition = transform(Image.open(example["condition"]).convert("RGB"))
     return {
         "pixel_values": image,
         "conditioning_pixel_values": condition
