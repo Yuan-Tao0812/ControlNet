@@ -82,13 +82,12 @@ def preprocess(example):
     image = transform(Image.open(example["image"]).convert("RGB"))
     condition = transform(Image.open(example["condition"]).convert("RGB"))
     return {
-        "pixel_values": image,
-        "conditioning_pixel_values": condition
+        "pixel_values": image.numpy(),  # 👈 转为 numpy array
+        "conditioning_pixel_values": condition.numpy()
     }
 
 ds = ds.map(preprocess)
 print("预处理")
-print(ds[0])
 ds = ds.shuffle(seed=42)
 ds.set_format(type="torch", columns=["pixel_values", "conditioning_pixel_values"])
 dataloader = DataLoader(ds, batch_size=2)
