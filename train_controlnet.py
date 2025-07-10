@@ -86,8 +86,8 @@ def preprocess(example):
     condition = transform(condition).to(dtype=torch.float16)
 
     return {
-        "pixel_values": image,
-        "conditioning_pixel_values": condition
+        "pixel_values": image.numpy(),
+        "conditioning_pixel_values": condition.numpy()
     }
 
 
@@ -104,14 +104,11 @@ print("准备进入训练循环")
 # 训练 loop
 unet.train()
 controlnet.train()
+batch = next(iter(dataloader))
+print(type(batch["pixel_values"]), batch["pixel_values"].dtype)
+print(type(batch["conditioning_pixel_values"]), batch["conditioning_pixel_values"].dtype)
 for epoch in range(3):
     for i, batch in enumerate(dataloader):
-        print(type(batch["pixel_values"]),
-              batch["pixel_values"].dtype if hasattr(batch["pixel_values"], 'dtype') else None)
-        print(type(batch["conditioning_pixel_values"]),
-              batch["conditioning_pixel_values"].dtype if hasattr(batch["conditioning_pixel_values"],
-                                                                  'dtype') else None)
-        break
         pixel_values = batch["pixel_values"].to(dtype=vae.dtype, device=accelerator.device)
         condition = batch["conditioning_pixel_values"].to(dtype=torch.float16, device=accelerator.device)
 
