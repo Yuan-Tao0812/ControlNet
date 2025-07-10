@@ -95,7 +95,7 @@ noise_scheduler = DDPMScheduler.from_pretrained("runwayml/stable-diffusion-v1-5"
 # 训练 loop
 for epoch in range(3):
     for i, batch in enumerate(ds.with_format("torch").shuffle().batch(2)):
-        pixel_values = batch["pixel_values"].to(accelerator.device, dtype=torch.float16)
+        pixel_values = batch["pixel_values"].to(dtype=vae.dtype, device=vae.device)
         condition = batch["conditioning_pixel_values"].to(accelerator.device, dtype=torch.float16)
 
         # 编码为 latent
