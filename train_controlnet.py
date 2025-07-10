@@ -93,7 +93,7 @@ ds.set_format(type="torch", columns=["pixel_values", "conditioning_pixel_values"
 dataloader = DataLoader(ds, batch_size=2)
 
 # 噪声调度器
-noise_scheduler = DDPMScheduler.from_pretrained("runwayml/stable-diffusion-v1-5", subfolder="scheduler")
+noise_scheduler = DDPMScheduler.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5", subfolder="scheduler")
 print("准备进入训练循环")
 
 # 训练 loop
