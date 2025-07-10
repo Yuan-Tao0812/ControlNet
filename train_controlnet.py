@@ -84,12 +84,12 @@ def preprocess(example):
 
     # image = transform(image).to(dtype=torch.float16)
     # condition = transform(condition).to(dtype=torch.float16)
-    image = transform(image).numpy().astype("float32").tolist()
-    condition = transform(condition).numpy().astype("float32").tolist()
+    image = transform(image)
+    condition = transform(condition)
 
     return {
-        "pixel_values": image,
-        "conditioning_pixel_values": condition
+        "pixel_values": image.to(dtype=torch.float32),
+        "conditioning_pixel_values": condition.to(dtype=torch.float32)
     }
 
 
@@ -111,7 +111,7 @@ print(type(batch["pixel_values"]), batch["pixel_values"].dtype)
 print(type(batch["conditioning_pixel_values"]), batch["conditioning_pixel_values"].dtype)
 for epoch in range(3):
     for i, batch in enumerate(dataloader):
-        pixel_values = batch["pixel_values"].to(dtype=vae.dtype, device=accelerator.device)
+        pixel_values = batch["pixel_values"].to(dtype=torch.float32, device=accelerator.device)
         condition = batch["conditioning_pixel_values"].to(dtype=torch.float16, device=accelerator.device)
 
         # 编码为 latent
