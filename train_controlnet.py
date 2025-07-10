@@ -84,8 +84,8 @@ def preprocess(example):
 
     # image = transform(image).to(dtype=torch.float16)
     # condition = transform(condition).to(dtype=torch.float16)
-    image = transform(image).numpy().astype("float16")
-    condition = transform(condition).numpy().astype("float16")
+    image = transform(image).numpy().astype("float32").tolist()
+    condition = transform(condition).numpy().astype("float32").tolist()
 
     return {
         "pixel_values": image,
