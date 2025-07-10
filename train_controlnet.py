@@ -82,19 +82,21 @@ def preprocess(example):
     image = Image.open(example["image"]).convert("RGB")
     condition = Image.open(example["condition"]).convert("RGB")
 
-    image = transform(image).to(dtype=torch.float16)
-    condition = transform(condition).to(dtype=torch.float16)
+    # image = transform(image).to(dtype=torch.float16)
+    # condition = transform(condition).to(dtype=torch.float16)
+    image = transform(image).numpy().astype("float16")
+    condition = transform(condition).numpy().astype("float16")
 
     return {
-        "pixel_values": image.numpy(),
-        "conditioning_pixel_values": condition.numpy()
+        "pixel_values": image,
+        "conditioning_pixel_values": condition
     }
 
 
 ds = ds.map(preprocess)
 print("预处理")
 ds = ds.shuffle(seed=42)
-# ds.set_format(type="torch", columns=["pixel_values", "conditioning_pixel_values"])
+ds.set_format(type="torch", columns=["pixel_values", "conditioning_pixel_values"])
 dataloader = DataLoader(ds, batch_size=2)
 
 # 噪声调度器
