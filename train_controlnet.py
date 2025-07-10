@@ -82,16 +82,27 @@ def preprocess(example):
     image = Image.open(example["image"]).convert("RGB")
     condition = Image.open(example["condition"]).convert("RGB")
 
-    image = np.array(transform(image), dtype=np.float32)
-    condition = np.array(transform(condition), dtype=np.float32)
+    # 先 resize
+    image = image.resize((512, 512))
+    condition = condition.resize((512, 512))
+
+    # 转 np.array (H,W,C)，转 float32，范围0-1
+    image = np.array(image).astype(np.float32) / 255.0
+    condition = np.array(condition).astype(np.float32) / 255.0
+
+    # 转为 (C,H,W)
+    image = image.transpose(2, 0, 1)
+    condition = condition.transpose(2, 0, 1)
 
     return {
         "pixel_values": image,
-        "conditioning_pixel_values": condition
+        "conditioning_pixel_values": condition,
     }
 
-ds = ds.map(preprocess, remove_columns=["image", "condition"])
 print("预处理")
+ds = ds.map(preprocess, remove_columns=["image", "condition"])
+print(type(ds[0]["pixel_values"]), ds[0]["pixel_values"].shape)
+print(type(ds[0]["conditioning_pixel_values"]), ds[0]["conditioning_pixel_values"].shape)
 ds = ds.shuffle(seed=42)
 ds.set_format(type="torch", columns=["pixel_values", "conditioning_pixel_values"])
 print(type(ds[0]["pixel_values"]), ds[0]["pixel_values"].shape)
