@@ -1,6 +1,7 @@
 import os
 import torch
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
 from datasets import Dataset
 from PIL import Image
 from diffusers import ControlNetModel, UNet2DConditionModel, AutoencoderKL, DDPMScheduler
@@ -65,14 +66,14 @@ def add_lora_to_unet(unet):
     return unet
 
 unet = add_lora_to_unet(unet)
-
+print("加 LoRA 到 UNet")
 # 优化器
 optimizer = torch.optim.Adam(unet.parameters(), lr=1e-5)
-
+print("优化器")
 # 加速器
 accelerator = Accelerator()
 unet, optimizer = accelerator.prepare(unet, optimizer)
-
+print("加速器")
 # 预处理函数
 transform = transforms.Compose([
     transforms.Resize((512, 512)),
@@ -88,15 +89,23 @@ def preprocess(example):
     }
 
 ds = ds.map(preprocess)
+print("预处理")
+
+ds = ds.shuffle(seed=42)
+ds.set_format("torch")                     # 设置为 PyTorch tensor 格式
+dataloader = DataLoader(ds, batch_size=2)
 
 # 噪声调度器
 noise_scheduler = DDPMScheduler.from_pretrained("runwayml/stable-diffusion-v1-5", subfolder="scheduler")
 print("准备进入训练循环")
+
 # 训练 loop
+unet.train()
+controlnet.train()
 for epoch in range(3):
-    for i, batch in enumerate(ds.with_format("torch").shuffle().batch(2)):
-        pixel_values = batch["pixel_values"].to(dtype=vae.dtype, device=vae.device)
-        condition = batch["conditioning_pixel_values"].to(accelerator.device, dtype=torch.float16)
+    for i, batch in enumerate(dataloader):
+        pixel_values = batch["pixel_values"].to(dtype=vae.dtype, device=accelerator.device)
+        condition = batch["conditioning_pixel_values"].to(dtype=torch.float16, device=accelerator.device)
 
         # 编码为 latent
         with torch.no_grad():
